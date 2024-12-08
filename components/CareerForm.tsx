@@ -21,7 +21,7 @@ const steps = [
   { title: "Additional Details", icon: FileText },
 ]
 
-const getOrdinalSuffix = (num) => {
+const getOrdinalSuffix = (num: number): string => {
   const j = num % 10,
         k = num % 100;
   if (j == 1 && k != 11) {
@@ -36,12 +36,25 @@ const getOrdinalSuffix = (num) => {
   return "th";
 }
 
-const useFormValidation = (initialState) => {
-  const [values, setValues] = useState(initialState)
-  const [errors, setErrors] = useState({})
-  const [touched, setTouched] = useState({})
+interface FormState {
+  fullName: string;
+  email: string;
+  phone: string;
+  userType: string;
+  grade: string;
+  schoolName: string;
+  preferredField: string;
+  preferredRole: string;
+  comments: string;
+  consent: boolean;
+}
 
-  const validateField = useCallback((name, value) => {
+const useFormValidation = (initialState: FormState) => {
+  const [values, setValues] = useState(initialState)
+  const [errors, setErrors] = useState<Partial<FormState>>({})
+  const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({})
+
+  const validateField = useCallback((name: keyof FormState, value: string) => {
     let error = ''
     switch (name) {
       case 'fullName':
@@ -74,31 +87,32 @@ const useFormValidation = (initialState) => {
     return error
   }, [])
 
-  const handleChange = useCallback((event) => {
+  const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
     setValues(prev => ({ ...prev, [name]: value }))
   }, [])
 
-  const handleBlur = useCallback((event) => {
+  const handleBlur = useCallback((event: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
     setTouched(prev => ({ ...prev, [name]: true }))
     setErrors(prev => ({ ...prev, [name]: validateField(name, value) }))
   }, [validateField])
 
-  const isStepValid = useCallback((step) => {
-    const stepFields = {
-      0: ['fullName', 'email', 'phone', 'userType'],
-      1: ['grade', 'schoolName'],
-      2: [],
-      3: ['consent']
-    }
+  const stepFields: Record<number, Array<keyof FormState>> = {
+    0: ['fullName', 'email', 'phone', 'userType'],
+    1: ['grade', 'schoolName'],
+    2: [],
+    3: ['consent']
+  }
+
+  const isStepValid = useCallback((step: number) => {
     return stepFields[step].every(field => !errors[field] && touched[field])
   }, [errors, touched])
 
   return { values, errors, touched, handleChange, handleBlur, isStepValid }
 }
 
-const InputField = ({ icon: Icon, error, touched, ...props }) => (
+const InputField = ({ icon: Icon, error, touched, ...props }: { icon: React.ElementType; error?: string; touched?: boolean; [key: string]: any }) => (
   <div className="relative">
     <div className="relative h-12">
       <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={18} />
@@ -111,7 +125,7 @@ const InputField = ({ icon: Icon, error, touched, ...props }) => (
   </div>
 )
 
-const SelectField = ({ icon: Icon, error, touched, ...props }) => (
+const SelectField = ({ icon: Icon, error, touched, ...props }: { icon: React.ElementType; error?: string; touched?: boolean; [key: string]: any }) => (
   <div className="relative">
     <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
     <select
@@ -148,8 +162,11 @@ export default function CareerForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    console.log('Form submission started');
+    console.log('Form values:', values);
 
     try {
+      console.log('Sending request to /api/submit-form');
       const response = await fetch('/api/submit-form', {
         method: 'POST',
         headers: {
@@ -157,8 +174,9 @@ export default function CareerForm() {
         },
         body: JSON.stringify(values),
       })
-
+      console.log('Response status:', response.status);
       const contentType = response.headers.get("content-type");
+      console.log('Response content type:', contentType);
       if (contentType && contentType.indexOf("application/json") !== -1) {
         const responseData = await response.json()
 
@@ -171,12 +189,14 @@ export default function CareerForm() {
         throw new Error('Received an unexpected response from the server')
       }
     } catch (error) {
+      console.error('Form submission error:', error);
       if (error instanceof Error) {
         alert(`There was an error submitting the form: ${error.message}`)
       } else {
         alert('There was an unknown error submitting the form. Please try again.')
       }
     } finally {
+      console.log('Form submission completed');
       setIsSubmitting(false)
     }
   }
@@ -209,7 +229,7 @@ export default function CareerForm() {
           </motion.div>
           <h3 className="text-2xl font-semibold mb-4 text-primary">Thank You!</h3>
           <p className="text-lg text-gray-600 mb-8">
-            Your form has been submitted successfully. We&apos;ll be in touch soon!
+            Your form has been submitted successfully. We'll be in touch soon!
           </p>
         </div>
       )
@@ -359,6 +379,8 @@ export default function CareerForm() {
                   value={values.preferredField}
                   onChange={handleChange}
                   onBlur={handleBlur}
+                  error={errors.preferredField}
+                  touched={touched.preferredField}
                   placeholder="e.g., IT, Finance, Arts"
                 />
               </div>
@@ -374,6 +396,8 @@ export default function CareerForm() {
                   value={values.preferredRole}
                   onChange={handleChange}
                   onBlur={handleBlur}
+                  error={errors.preferredRole}
+                  touched={touched.preferredRole}
                 />
               </div>
             </div>

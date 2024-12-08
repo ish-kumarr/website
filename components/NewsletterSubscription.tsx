@@ -13,9 +13,12 @@ export default function NewsletterSubscription() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('Newsletter subscription started');
+    console.log('Email:', email);
     setStatus('loading')
 
     try {
+      console.log('Sending request to /api/subscribe');
       const response = await fetch('/api/subscribe', {
         method: 'POST',
         headers: {
@@ -23,6 +26,7 @@ export default function NewsletterSubscription() {
         },
         body: JSON.stringify({ email }),
       })
+      console.log('Response status:', response.status);
 
       if (response.ok) {
         setStatus('success')
@@ -31,10 +35,12 @@ export default function NewsletterSubscription() {
       } else {
         throw new Error('Subscription failed')
       }
-    } catch {
+    } catch (error) {
+      console.error('Newsletter subscription error:', error);
       setStatus('error')
       setMessage('An error occurred. Please try again.')
     }
+    console.log('Subscription status:', status);
   }
 
   return (

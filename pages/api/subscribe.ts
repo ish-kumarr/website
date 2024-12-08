@@ -11,20 +11,27 @@ const transporter = nodemailer.createTransport({
 })
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('Subscribe API route called');
+
   if (req.method !== 'POST') {
+    console.log('Method not allowed:', req.method);
     return res.status(405).json({ message: 'Method Not Allowed' })
   }
 
   const { email } = req.body
 
   if (!email) {
+    console.log('Email is missing in the request body');
     return res.status(400).json({ message: 'Email is required' })
   }
 
   try {
+    console.log('Sending newsletter subscription email for:', email);
     await sendNewsletterSubscriptionEmail(email)
+    console.log('Subscription successful');
     res.status(200).json({ message: 'Subscription successful' })
   } catch (error) {
+    console.error('Error processing subscription:', error);
     if (error instanceof Error) {
       res.status(500).json({ message: `Error processing subscription: ${error.message}` })
     } else {
@@ -70,5 +77,6 @@ async function sendNewsletterSubscriptionEmail(email: string) {
   }
 
   await transporter.sendMail(mailOptions)
+  console.log('Newsletter subscription email sent');
 }
 
