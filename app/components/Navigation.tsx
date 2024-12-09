@@ -23,8 +23,8 @@ const Navigation = () => {
     () => [
       { href: '#home', label: 'Home' },
       { href: '#about', label: 'About' },
-      { href: '#services', label: 'Services' },
       { href: '#how-it-works', label: 'How It Works' },
+      { href: '#services', label: 'Career Pathways' },
       { href: '#success-stories', label: 'Success Stories' },
       { href: '#contact', label: 'Contact' },
     ],
@@ -112,7 +112,7 @@ const Navigation = () => {
 
           {/* Contact Us Button (Desktop) */}
           <div className="hidden md:block">
-            <Button href="/contact" variant={isScrolled ? 'primary' : 'white'}>
+            <Button href="#contact" variant={isScrolled ? 'primary' : 'white'}>
               Contact Us
             </Button>
           </div>

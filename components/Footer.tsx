@@ -61,10 +61,8 @@ const Footer = () => {
               <p className="text-gray-600"><strong>Phone:</strong> +91 97177 71969</p>
             </div>
             <div className="flex space-x-4 mt-6">
-              <SocialIcon Icon={Facebook} href="https://facebook.com" />
-              <SocialIcon Icon={Twitter} href="https://twitter.com" />
-              <SocialIcon Icon={LinkedIn} href="https://linkedin.com" />
-              <SocialIcon Icon={Instagram} href="https://instagram.com" />
+              <SocialIcon Icon={Facebook} href="https://www.facebook.com/profile.php?id=61569468055193&mibextid=ZbWKwL" />
+              <SocialIcon Icon={Instagram} href="https://www.instagram.com/thecareerdiscovery" />
             </div>
           </div>
           
