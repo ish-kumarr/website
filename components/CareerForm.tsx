@@ -89,8 +89,13 @@ const useFormValidation = (initialState: FormState) => {
 
   const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
-    setValues(prev => ({ ...prev, [name]: value }))
-  }, [])
+    setValues(prev => {
+      const newValues = { ...prev, [name]: value };
+      setErrors(prevErrors => ({ ...prevErrors, [name]: validateField(name, value) }));
+      setTouched(prevTouched => ({ ...prevTouched, [name]: true }));
+      return newValues;
+    })
+  }, [validateField])
 
   const handleBlur = useCallback((event: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target
@@ -109,7 +114,16 @@ const useFormValidation = (initialState: FormState) => {
     return stepFields[step].every(field => !errors[field] && touched[field])
   }, [errors, touched])
 
-  return { values, errors, touched, handleChange, handleBlur, isStepValid }
+  const validateForm = useCallback((currentStep: number) => {
+    const currentFields = stepFields[currentStep];
+    const isLastStep = currentStep === steps.length - 1;
+    return currentFields.every(field => {
+      const value = values[field];
+      return value !== '' && !validateField(field, value);
+    }) && (!isLastStep || values.consent);
+  }, [values, validateField, stepFields]);
+
+  return { values, errors, touched, handleChange, handleBlur, isStepValid, validateForm }
 }
 
 const InputField = ({ icon: Icon, error, touched, ...props }: { icon: React.ElementType; error?: string; touched?: boolean; [key: string]: any }) => (
@@ -157,7 +171,7 @@ export default function CareerForm() {
     consent: false
   }
 
-  const { values, errors, touched, handleChange, handleBlur, isStepValid } = useFormValidation(initialState)
+  const { values, errors, touched, handleChange, handleBlur, isStepValid, validateForm } = useFormValidation(initialState)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -202,7 +216,7 @@ export default function CareerForm() {
   }
 
   const nextStep = () => {
-    if (isStepValid(currentStep)) {
+    if (validateForm(currentStep)) {
       setDirection('right')
       setCompletedSteps(prev => new Set(prev).add(currentStep))
       setCurrentStep(prev => Math.min(prev + 1, steps.length - 1))
@@ -433,7 +447,10 @@ export default function CareerForm() {
                       name="consent"
                       type="checkbox"
                       checked={values.consent}
-                      onChange={handleChange}
+                      onChange={(e) => {
+                        handleChange(e);
+                        //e.preventDefault(); // Prevent form submission - This line is not needed here.  The preventDefault is handled in the handleSubmit function.
+                      }}
                       onBlur={handleBlur}
                       className="focus:ring-primary h-5 w-5 text-primary border-gray-300 rounded"
                     />
@@ -525,9 +542,9 @@ export default function CareerForm() {
                   <button
                     type="button"
                     onClick={nextStep}
-                    disabled={!isStepValid(currentStep)}
+                    disabled={!validateForm(currentStep)}
                     className={`ml-auto flex items-center px-6 py-3 ${
-                      isStepValid(currentStep) ? 'bg-primary text-white hover:bg-primary-dark' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      validateForm(currentStep) ? 'bg-primary text-white hover:bg-primary-dark' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     } rounded-full transition-colors duration-300`}
                   >
                     Next
@@ -536,9 +553,9 @@ export default function CareerForm() {
                 ) : (
                   <button
                     type="submit"
-                    disabled={!isStepValid(currentStep) || isSubmitting}
+                    disabled={!validateForm(currentStep) || !values.consent || isSubmitting}
                     className={`ml-auto px-6 py-3 ${
-                      isStepValid(currentStep) && !isSubmitting
+                      validateForm(currentStep) && values.consent && !isSubmitting
                         ? 'bg-primary text-white hover:bg-primary-dark'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     } rounded-full transition-colors duration-300 flex items-center`}
