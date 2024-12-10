@@ -39,10 +39,7 @@ export default function NewsletterSubscription() {
 
   return (
     <div className="space-y-4 max-w-md mx-auto">
-      <p className="text-sm text-gray-600">
-        Subscribe to our newsletter for the latest career insights and opportunities.
-      </p>
-      
+    
       <form onSubmit={handleSubmit} className="space-y-3">
         <Input
           type="email"
