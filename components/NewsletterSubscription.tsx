@@ -2,23 +2,21 @@
 
 import { useState } from 'react'
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { Check, Loader2, CircleCheck } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function NewsletterSubscription() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [message, setMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Newsletter subscription started');
-    console.log('Email:', email);
+    if (status === 'loading') return
+
     setStatus('loading')
+    console.log('Newsletter subscription started')
 
     try {
-      console.log('Sending request to /api/subscribe');
       const response = await fetch('/api/subscribe', {
         method: 'POST',
         headers: {
@@ -26,75 +24,101 @@ export default function NewsletterSubscription() {
         },
         body: JSON.stringify({ email }),
       })
-      console.log('Response status:', response.status);
 
       if (response.ok) {
         setStatus('success')
-        setMessage('Thank you for subscribing!')
         setEmail('')
       } else {
         throw new Error('Subscription failed')
       }
     } catch (error) {
-      console.error('Newsletter subscription error:', error);
+      console.error('Newsletter subscription error:', error)
       setStatus('error')
-      setMessage('An error occurred. Please try again.')
     }
-    console.log('Subscription status:', status);
   }
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="space-y-2">
+    <div className="space-y-4 max-w-md mx-auto">
+      <p className="text-sm text-gray-600">
+        Subscribe to our newsletter for the latest career insights and opportunities.
+      </p>
+      
+      <form onSubmit={handleSubmit} className="space-y-3">
         <Input
           type="email"
           placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="bg-white rounded-full"
+          className="h-12 px-4 bg-white rounded-full border border-gray-200"
           required
+          disabled={status === 'success'}
         />
-        <Button 
-          type="submit" 
-          className="w-full rounded-full bg-[#356bff] hover:bg-[#2e5ee6] text-white" 
-          disabled={status === 'loading'}
+        
+        <motion.button
+          type="submit"
+          disabled={status === 'loading' || status === 'success'}
+          className={`
+            w-full h-12 rounded-full relative overflow-hidden
+            transition-all duration-300 ease-out
+            ${status === 'success' 
+              ? 'bg-green-500' 
+              : status === 'error'
+                ? 'bg-red-500'
+                : 'bg-[#356bff]'}
+          `}
         >
-          {status === 'loading' ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Subscribing...
-            </>
-          ) : (
-            'Subscribe'
-          )}
-        </Button>
+          <AnimatePresence mode="wait">
+            {status === 'loading' && (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              </motion.div>
+            )}
+
+            {status === 'success' && (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute inset-0 flex items-center justify-center space-x-2"
+              >
+                <CircleCheck className="w-5 h-5 text-white" />
+                <span className="text-white font-medium text-base">Subscribed!</span>
+              </motion.div>
+            )}
+
+            {(status === 'idle' || status === 'error') && (
+              <motion.span
+                key="text"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="text-white font-medium text-base"
+              >
+                {status === 'error' ? 'Try Again' : 'Subscribe'}
+              </motion.span>
+            )}
+          </AnimatePresence>
+
+          <motion.div
+            className="absolute inset-0"
+            initial={{ backgroundPosition: '200% 0' }}
+            animate={{ backgroundPosition: '0% 0' }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+            style={{
+              backgroundImage: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+              backgroundSize: '200% 100%',
+            }}
+          />
+        </motion.button>
       </form>
-      <AnimatePresence mode="wait">
-        {status === 'success' && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.5 }}
-            className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-full flex items-center"
-          >
-            <CheckCircle className="w-5 h-5 mr-2" />
-            <span>{message}</span>
-          </motion.div>
-        )}
-        {status === 'error' && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.5 }}
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-full flex items-center"
-          >
-            <XCircle className="w-5 h-5 mr-2" />
-            <span>{message}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
