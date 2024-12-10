@@ -265,7 +265,7 @@ export default function HowItWorks() {
               >
                 <div className="relative mt-6">
                   <Button 
-                    href="/plans" 
+                    href="#plans" 
                     variant="primary" 
                     className="shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
                   >
